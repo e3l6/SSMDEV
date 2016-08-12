@@ -1,0 +1,63 @@
+Physically set platform
+
+    Push setup button => 3 LEDs (RGR) blinks twice, Setup status indicator
+      slow blink
+    Check magnometer, indicate left or right via LED for user to manually
+      adjust platform until oriented towards apparent magnetic North (red LEDs
+      indicate direction to rotate platform base. medium speed green blink if
+      within 5 degrees. solid green if within 0.5 degrees)
+    Push setup button => Green LED blinks twice, indicating platform base
+      oriented towards magnetic north
+    Check accelerometer for level, indicate higher point(s) with leds. User
+      manually adjusts legs until all 3 feet LEDs lit. (Status panel for North,
+      Level, GPS fix, etc.?)
+    Once oriented and level, user pushes setup button third time.
+
+MCU setup
+
+    Turn on GPS and acquire fix
+    Compare and set real-time clock
+    Compute sunrise and sunset
+
+        if sunset > current time > sunrise
+            compute current sun angle
+            slew & elevate to computed position
+            acquire lock using photodiode array
+        else
+            compute next day sunrise
+            slew and elevate to computed sunrise
+            system standby until 60 seconds before sunrise
+            wake up
+            after sunrise, acquire sun lock using photodiode array
+        end if;
+    
+    Using magnometer and accelerometer, compute difference between computed 
+      sun position and actual sun position.
+    Upate offset values.
+
+
+Function loop:
+
+    if sunset > current time > sunrise
+        if ambient light > threshold
+            orient to sun using photodiode array
+            record values (time, geoposit, sunangle, composite intensity,
+              red, blue)
+            delay until next measurement time (60, 30, 15 second intervals?)
+        else
+            compute sun angle
+            orient to sun using calculated sun angle
+            record values
+            delay until next measurement time
+        end if;
+    else
+        compute next sunrise
+        orient to computed sunrise sun angle
+        set modules to stanby
+        delay until sunrise
+        wake modules
+        ensure GPS fix, north orientation, and level
+        verify clocks
+    end if;
+
+end loop;

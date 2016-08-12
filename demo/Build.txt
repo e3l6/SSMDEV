@@ -1,0 +1,96 @@
+Build instructions
+
+-------------------------------------------------------------------------------
+-- Requirements
+-------------------------------------------------------------------------------
+
+AdaCore's GNAT GPL 2016 for ARM ELF format
+ST Micro STM32F407G Discovery
+Adafruit Ultimate GPS Breakout v3
+Pololu 5V, 5A Step-Down Voltage Regulator D24V50F5
+Pololu DRV8834 Low-Voltage Stepper Motor Driver Carrier
+QMot QSH4218-41-10-035 stepper motor
+
+Reference manuals for proper wiring
+Hook-up wire and DuPont style connector pins and housings
+
+-------------------------------------------------------------------------------
+-- Procedure
+-------------------------------------------------------------------------------
+
+Wiring diagrams are on the to do list.
+
+
+Tested under Ubuntu 16.04:
+
+Download and install  (hosted on Linux)
+
+Ensure rules for the STM32F407 Discovery board and the PL2303 USB-Serial
+converter are in /etc/udev/rules.d/
+
+For the STM32F407G-DISC1 board I have, the file is "49-stlinkv2-1.rules":
+
+# stm32 nucleo boards, with onboard st/linkv2-1
+# ie, STM32F0, STM32F4.
+# STM32VL has st/linkv1, which is quite different
+
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="374b", \
+    MODE:="0666", \
+    SYMLINK+="stlinkv2-1_%n"
+
+# If you share your linux system with other users, or just don't like the
+# idea of write permission for everybody, you can replace MODE:="0666" with
+# OWNER:="yourusername" to create the device owned by you, or with
+# GROUP:="somegroupname" and mange access using standard unix groups.
+
+# 0483:5740 - STM32F4 Dsicovery in USB Serial Mode (CN5)
+ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", \
+    ENV{ID_MM_DEVICE_IGNORE}="1"
+ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", \
+    ENV{MTP_NO_PROBE}="1"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", \
+    MODE:="0666"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", \
+    MODE:="0666"
+    
+# 0483:df11 - STM32F4 Discovery in DFU mode (CN5)
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="df11", \
+    MODE:="0666"
+# end of file
+
+-------------------------------------------------------------------------------
+
+For the PL2303 based USB-Serial cable I have, the file is
+"85-PL2303SerialPort.rules":
+
+ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", MODE="0666"
+# end of file
+
+-------------------------------------------------------------------------------
+
+To build, load, and execute the demo project:
+
+Ensure the Discovery board, GPS, USB/Serial cable and motor controllers are
+connected properly:
+
+GPS - USART2 (PA2/PA3) and power/ground
+Motor controller - ~SLP to +5, STEP to PD12, DIR to PD14
+USB/Serial cable - USART1 (PB6/PB7) and ground (leave power unconnected)
+
+Connect the STM32F4's debug port (mini-usb) to your computer.
+Connect the USB/Serial cable to you computer.
+
+Enter the following:
+# cd SSMDev/demo
+# gps
+
+This will start the GNAT Programming System and load the Demo project.
+
+Push the "Flash to Board: demo.adb" toolbar button. This will compile the
+project and flash it to the Discovery board.
+
+Open up a TTY emulator (minicom is good) at 115200 8N1 to /dev/ttyUSB0
+(may have to sudo if you've not changed it's permissions or your user group)
+
+You should see the data from the GPS module on the TTY emulator and the motor
+turning. Pushing the blue button will reverse the motor rotation direction.
